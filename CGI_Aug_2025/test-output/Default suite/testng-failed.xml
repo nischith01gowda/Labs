@@ -3,19 +3,13 @@
 <suite name="Failed suite [Default suite]" guice-stage="DEVELOPMENT">
   <test thread-count="5" name="Default test(failed)">
     <classes>
-      <class name="pack1.TC011_TestNG">
+      <class name="pack1.Project_REG_EndToEnd_05">
         <methods>
-          <include name="afterSuite"/>
-          <include name="afterMethod"/>
-          <include name="beforeTest"/>
-          <include name="afterClass"/>
-          <include name="afterTest"/>
-          <include name="beforeSuite"/>
-          <include name="beforeMethod"/>
-          <include name="beforeClass"/>
-          <include name="f"/>
+          <include name="cartPersistenceFlow"/>
+          <include name="tearDown"/>
+          <include name="setup"/>
         </methods>
-      </class> <!-- pack1.TC011_TestNG -->
+      </class> <!-- pack1.Project_REG_EndToEnd_05 -->
     </classes>
   </test> <!-- Default test(failed) -->
 </suite> <!-- Failed suite [Default suite] -->
