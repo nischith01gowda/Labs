@@ -3,13 +3,15 @@
 <suite name="Failed suite [Default suite]" guice-stage="DEVELOPMENT">
   <test thread-count="5" name="Default test(failed)">
     <classes>
-      <class name="pack1.Project_REG_EndToEnd_05">
+      <class name="com.orangehrm.tests.Login_orangehrm">
         <methods>
-          <include name="cartPersistenceFlow"/>
-          <include name="tearDown"/>
+          <include name="setupreport"/>
+          <include name="flushreport"/>
           <include name="setup"/>
+          <include name="verifylogin" invocation-numbers="1 2"/>
+          <include name="teardown"/>
         </methods>
-      </class> <!-- pack1.Project_REG_EndToEnd_05 -->
+      </class> <!-- com.orangehrm.tests.Login_orangehrm -->
     </classes>
   </test> <!-- Default test(failed) -->
 </suite> <!-- Failed suite [Default suite] -->

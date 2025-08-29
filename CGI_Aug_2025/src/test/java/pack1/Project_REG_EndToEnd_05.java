@@ -1,22 +1,26 @@
 package pack1;
 
+
 import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
 import com.aventstack.extentreports.reporter.ExtentSparkReporter;
-import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.testng.Assert;
 import org.testng.annotations.*;
 
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 
 public class Project_REG_EndToEnd_05 {
     WebDriver driver;
     ExtentReports extent;
     ExtentTest test;
+    HomePage05 home;
+    LoginPage05 login;
+    ProductsPage05 products;
+    CartPage05 cart;
+    CheckoutPage05 checkout;
+    PaymentPage05 payment;
 
     @BeforeClass
     public void setup() {
@@ -29,67 +33,65 @@ public class Project_REG_EndToEnd_05 {
         extent.attachReporter(reporter);
 
         driver.get("https://automationexercise.com/");
+
+        home = new HomePage05(driver);
+        login = new LoginPage05(driver);
+        products = new ProductsPage05(driver);
+        cart = new CartPage05(driver);
+        checkout = new CheckoutPage05(driver);
+        payment = new PaymentPage05(driver);
     }
 
-    @Test
-    public void cartPersistenceFlow() {
+    @DataProvider(name = "userData05")
+    public Object[][] getUserData() {
+        return new Object[][]{
+                {"virat0018@gmail.com", "virat"}
+        };
+    }
+
+    @Test(dataProvider = "userData05")
+    public void cartPersistenceFlow(String email, String password) {
         test = extent.createTest("Cart Persistence Flow");
 
-       
-        driver.findElement(By.xpath("//a[@href='/login']")).click();
-        driver.findElement(By.xpath("//input[@data-qa='login-email']")).sendKeys("virat0018@gmail.com");
-        driver.findElement(By.xpath("//input[@data-qa='login-password']")).sendKeys("virat");
-        driver.findElement(By.xpath("//button[@data-qa='login-button']")).click();
-
-        WebElement loggedIn = driver.findElement(By.xpath("//a[contains(text(),'Logged in as')]"));
-        Assert.assertTrue(loggedIn.isDisplayed(), "Login failed!");
+        // Login
+        home.goToLogin();
+        login.login(email, password);
+        Assert.assertTrue(login.isLoggedIn(), "Login failed!");
         test.pass("Login successful");
 
-        
-        driver.findElement(By.xpath("//a[@href='/products']")).click();
-        driver.findElement(By.xpath("(//a[contains(text(),'Add to cart')])[1]")).click();
-        driver.findElement(By.xpath("//u[text()='View Cart']")).click();
-        WebElement cartTable = driver.findElement(By.xpath("//table[@id='cart_info_table']"));
-        Assert.assertTrue(cartTable.isDisplayed(), "Cart is not displayed after adding item");
-        test.pass("Item added to cart successfully");
+        // Add item to cart
+        home.goToProducts();
+        products.addFirstItemToCart();
+        products.viewCart();
+        Assert.assertTrue(cart.isCartDisplayed(), "Cart not displayed!");
+        test.pass("Item added to cart");
 
-        
-        driver.findElement(By.xpath("//a[@href='/logout']")).click();
-        WebElement loginPage = driver.findElement(By.xpath("//h2[text()='Login to your account']"));
-        Assert.assertTrue(loginPage.isDisplayed(), "Logout failed!");
+        // Logout
+        home.logout();
+        Assert.assertTrue(login.isLoginHeaderDisplayed(), "Logout failed!");
         test.pass("Logout successful");
 
-        driver.findElement(By.xpath("//input[@data-qa='login-email']")).sendKeys("virat0018@gmail.com");
-        driver.findElement(By.xpath("//input[@data-qa='login-password']")).sendKeys("virat");
-        driver.findElement(By.xpath("//button[@data-qa='login-button']")).click();
-        WebElement loggedInAgain = driver.findElement(By.xpath("//a[contains(text(),'Logged in as')]"));
-        Assert.assertTrue(loggedInAgain.isDisplayed(), "Re-login failed!");
+        // Login again
+        login.login(email, password);
+        Assert.assertTrue(login.isLoggedIn(), "Re-login failed!");
         test.pass("Re-login successful");
 
-        driver.findElement(By.xpath("//a[@href='/view_cart']")).click();
-        WebElement cartAfterLogin = driver.findElement(By.xpath("//table[@id='cart_info_table']"));
-        Assert.assertTrue(cartAfterLogin.isDisplayed(), "Cart is empty after re-login!");
+        // Verify cart persists
+        home.goToCart();
+        Assert.assertTrue(cart.isCartDisplayed(), "Cart is empty after re-login!");
         test.pass("Cart persists after re-login");
 
-        
-        driver.findElement(By.xpath("//a[contains(text(),'Proceed To Checkout')]")).click();
-        WebElement address = driver.findElement(By.xpath("//h2[contains(text(),'Address Details')]"));
-        Assert.assertTrue(address.isDisplayed(), "Checkout page not displayed!");
-        test.pass("Checkout page opened");
+        // Checkout
+        cart.proceedToCheckout();
+        Assert.assertTrue(checkout.isAddressDisplayed(), "Checkout page not displayed!");
+        test.pass("Checkout page displayed");
 
-        driver.findElement(By.xpath("//a[contains(text(),'Place Order')]")).click();
+        checkout.placeOrder();
 
         // Payment
-        driver.findElement(By.name("name_on_card")).sendKeys("Virat Kohli");
-        driver.findElement(By.name("card_number")).sendKeys("4111111111111111");
-        driver.findElement(By.name("cvc")).sendKeys("533");
-        driver.findElement(By.name("expiry_month")).sendKeys("12");
-        driver.findElement(By.name("expiry_year")).sendKeys("2030");
-        driver.findElement(By.id("submit")).click();
-
-        WebElement confirmation = driver.findElement(By.xpath("//p[contains(text(),'Congratulations! Your order has been confirmed!')]"));
-        Assert.assertTrue(confirmation.isDisplayed(), "Order confirmation not displayed!");
-        test.pass("Order placed successfully after re-login");
+        payment.enterPaymentDetails("Virat Kohli", "4111111111111111", "533", "12", "2030");
+        Assert.assertTrue(payment.isOrderConfirmed(), "Order not confirmed!");
+        test.pass("Order confirmed successfully");
     }
 
     @AfterClass

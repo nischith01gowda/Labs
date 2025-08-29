@@ -3,16 +3,12 @@ package pack1;
 import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
 import com.aventstack.extentreports.reporter.ExtentSparkReporter;
-import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.testng.Assert;
 import org.testng.annotations.*;
 
 import java.time.Duration;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class Project_REG_EndToEnd_02 {
     WebDriver driver;
@@ -29,51 +25,56 @@ public class Project_REG_EndToEnd_02 {
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
     }
 
-    @Test
-    public void fullUserFlow() {
+    @DataProvider(name = "userData")
+    public Object[][] getData() {
+        return new Object[][]{
+                {"virat0018@gmail.com", "virat"}
+        };
+    }
+
+    @Test(dataProvider = "userData")
+    public void fullUserFlow(String email, String password) {
         test = extent.createTest("Full User Flow");
+
         driver.get("https://automationexercise.com/");
-        driver.findElement(By.xpath("//a[@href='/login']")).click();
-        driver.findElement(By.xpath("//input[@data-qa='login-email']")).sendKeys("virat0018@gmail.com");
-        driver.findElement(By.xpath("//input[@data-qa='login-password']")).sendKeys("virat");
-        driver.findElement(By.xpath("//button[@data-qa='login-button']")).click();
-        WebElement loggedIn = driver.findElement(By.xpath("//a[contains(text(),'Logged in as')]"));
-        Assert.assertTrue(loggedIn.isDisplayed(), "Login failed!");
+
+        // Login
+        LoginPage02 loginPage = new LoginPage02(driver);
+        loginPage.goToLoginPage();
+        loginPage.login(email, password);
+        Assert.assertTrue(loginPage.isLoggedIn(), "Login failed!");
         test.pass("Login successful");
-        
-        driver.findElement(By.xpath("//a[@href='/products']")).click();
-        driver.findElement(By.xpath("(//a[contains(text(),'Add to cart')])[1]")).click();
-        driver.findElement(By.xpath("//button[text()='Continue Shopping']")).click();
-        driver.findElement(By.xpath("(//a[contains(text(),'Add to cart')])[3]")).click();
-        driver.findElement(By.xpath("//u[text()='View Cart']")).click();
-        List<WebElement> cartItems = driver.findElements(By.xpath("//tr[contains(@id,'product')]"));
-        Assert.assertEquals(cartItems.size(), 2, "Cart should contain 2 items");
+
+        // Add products
+        ProductsPage02 productsPage = new ProductsPage02(driver);
+        productsPage.goToProducts();
+        productsPage.addFirstProduct();
+        productsPage.addThirdProduct();
+
+        // Verify cart
+        CartPage02 cartPage = new CartPage02(driver);
+        Assert.assertEquals(cartPage.getCartItemCount(), 2, "Cart should contain 2 items");
         test.pass("Two items added to cart successfully");
 
-        
-        driver.findElement(By.xpath("(//a[@class='cart_quantity_delete'])[2]")).click();
-        List<WebElement> remainingItems = driver.findElements(By.xpath("//table[@id='cart_info_table']//tr[contains(@id,'product')]"));
-        Assert.assertEquals(remainingItems.size(), 2, "Only 1 item should remain");
+        // Remove second item
+        cartPage.removeSecondItem();
+        Assert.assertEquals(cartPage.getCartItemCount(), 1, "Only 1 item should remain");
         test.pass("Removed second item successfully");
-        
-        driver.findElement(By.xpath("//a[contains(text(),'Proceed To Checkout')]")).click();
-        WebElement address = driver.findElement(By.xpath("//h2[contains(text(),'Address Details')]"));
-        Assert.assertTrue(address.isDisplayed(), "Address details not visible");
-        driver.findElement(By.xpath("//a[contains(text(),'Place Order')]")).click();
-        driver.findElement(By.name("name_on_card")).sendKeys("Virat");
-        driver.findElement(By.name("card_number")).sendKeys("4111111111111111");
-        driver.findElement(By.name("cvc")).sendKeys("543");
-        driver.findElement(By.name("expiry_month")).sendKeys("12");
-        driver.findElement(By.name("expiry_year")).sendKeys("2030");
-        driver.findElement(By.id("submit")).click();
-        WebElement confirmation = driver.findElement(By.xpath("//p[contains(text(),'Congratulations! Your order has been confirmed!')]"));
-        Assert.assertTrue(confirmation.isDisplayed(), "Order confirmation not displayed!");
+
+        // Checkout
+        cartPage.proceedToCheckout();
+        CheckoutPage02 checkoutPage = new CheckoutPage02(driver);
+        Assert.assertTrue(checkoutPage.isAddressVisible(), "Address details not visible");
+
+        checkoutPage.placeOrder();
+        checkoutPage.enterPaymentDetails("Virat", "4111111111111111", "543", "12", "2030");
+        Assert.assertTrue(checkoutPage.isOrderConfirmed(), "Order confirmation not displayed!");
         test.pass("Checkout completed successfully");
     }
 
     @AfterClass
     public void tearDown() {
         driver.quit();
-        extent.flush(); 
+        extent.flush();
     }
 }
